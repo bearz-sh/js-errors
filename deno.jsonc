@@ -1,0 +1,19 @@
+{
+    "exclude": [
+        ".eng",
+        "npm"
+    ],
+    "fmt": {
+        "indentWidth": 4,
+        "lineWidth": 120,
+        "semiColons": true
+    },
+    "compilerOptions": {
+        "target": "es2021",
+        "experimentalDecorators": true,
+        "module": "esnext"
+    },
+    "tasks": {
+        "dnt": "deno run --allow-all --unstable ./.eng/dnt.ts"
+    }
+}
