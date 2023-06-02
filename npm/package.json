@@ -1,0 +1,42 @@
+{
+  "module": "./esm/mod.js",
+  "main": "./script/mod.js",
+  "name": "@bearz-sh/errors",
+  "version": "0.1.0",
+  "description": "Custom errors with extended properties and stack traces.",
+  "license": "MIT",
+  "contributors": [
+    {
+      "name": "bearz",
+      "url": "https://bearz-sh.github.io/"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bearz-sh/js-errors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bearz-sh/js-errors/issues"
+  },
+  "keywords": [
+    "errors",
+    "fx",
+    "bearz",
+    "bearz-sh"
+  ],
+  "exports": {
+    ".": {
+      "import": "./esm/mod.js",
+      "require": "./script/mod.js"
+    }
+  },
+  "scripts": {
+    "test": "node test_runner.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "picocolors": "^1.0.0",
+    "@bearz-sh/assertions": "0.1.0",
+    "@deno/shim-deno-test": "~0.4.0"
+  }
+}

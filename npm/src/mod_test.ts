@@ -1,4 +1,5 @@
-import * as assert from "https://deno.land/x/bearzsh_assertions@0.1.0/mod.ts";
+import * as dntShim from "./_dnt.test_shims.js";
+import * as assert from "@bearz-sh/assertions";
 import {
     ArgumentEmptyError,
     ArgumentError,
@@ -18,40 +19,40 @@ import {
     SystemError,
     TimeoutError,
     Win32Error,
-} from "./mod.ts";
+} from "./mod.js";
 
-Deno.test("SystemError should have correct name", () => {
+dntShim.Deno.test("SystemError should have correct name", () => {
     const error = new SystemError("test error");
     assert.equals(error.name, "SystemError");
 });
 
-Deno.test("SystemError should have correct message", () => {
+dntShim.Deno.test("SystemError should have correct message", () => {
     const message = "test error";
     const error = new SystemError(message);
     assert.equals(error.message, message);
 });
 
-Deno.test("SystemError should have correct innerError", () => {
+dntShim.Deno.test("SystemError should have correct innerError", () => {
     const innerError = new Error("inner error");
     const error = new SystemError("test error", { innerError });
     assert.equals(error.innerError, innerError);
 });
 
-Deno.test("SystemError should have correct data", () => {
+dntShim.Deno.test("SystemError should have correct data", () => {
     const data = { foo: "bar" };
     const error = new SystemError("test error");
     error.data = data;
     assert.equals(error.data, data);
 });
 
-Deno.test("SystemError should have correct link", () => {
+dntShim.Deno.test("SystemError should have correct link", () => {
     const link = "https://example.com";
     const error = new SystemError("test error");
     error.link = link;
     assert.equals(error.link, link);
 });
 
-Deno.test("SystemError should have correct stackTrace", () => {
+dntShim.Deno.test("SystemError should have correct stackTrace", () => {
     try {
         throw new SystemError("test error");
     } catch (e) {
@@ -61,7 +62,7 @@ Deno.test("SystemError should have correct stackTrace", () => {
     }
 });
 
-Deno.test("Win32Error", () => {
+dntShim.Deno.test("Win32Error", () => {
     const code = 200;
     const win32Docs = "https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Debug/system-error-codes.md";
     const e = assert.throws(
@@ -89,7 +90,7 @@ Deno.test("Win32Error", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("PlatformNotSupportedError", () => {
+dntShim.Deno.test("PlatformNotSupportedError", () => {
     const e = assert.throws(
         () => {
             PlatformNotSupportedError.throw();
@@ -113,7 +114,7 @@ Deno.test("PlatformNotSupportedError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("AssertionError", () => {
+dntShim.Deno.test("AssertionError", () => {
     const e = assert.throws(
         () => {
             AssertionError.throw();
@@ -137,7 +138,7 @@ Deno.test("AssertionError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("ArgumentError", () => {
+dntShim.Deno.test("ArgumentError", () => {
     const e = assert.throws(
         () => {
             ArgumentError.throwIf(true, "myParam");
@@ -165,7 +166,7 @@ Deno.test("ArgumentError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("ArgumentNullError", () => {
+dntShim.Deno.test("ArgumentNullError", () => {
     const e = assert.throws(
         () => {
             ArgumentNullError.throw(null, "myParam");
@@ -195,7 +196,7 @@ Deno.test("ArgumentNullError", () => {
     assert.equals(e2.parameterName, "myParam2");
 });
 
-Deno.test("ArgumentEmptyError", () => {
+dntShim.Deno.test("ArgumentEmptyError", () => {
     const e = assert.throws(
         () => {
             ArgumentEmptyError.throw("", "myParam");
@@ -225,7 +226,7 @@ Deno.test("ArgumentEmptyError", () => {
     assert.equals(e2.parameterName, "myParam2");
 });
 
-Deno.test("ArgumentRangeError", () => {
+dntShim.Deno.test("ArgumentRangeError", () => {
     const e = assert.throws(
         () => {
             ArgumentRangeError.throwIf(1 > 0, "myParam3");
@@ -255,7 +256,7 @@ Deno.test("ArgumentRangeError", () => {
     assert.equals(e2.parameterName, "myParam3");
 });
 
-Deno.test("InvalidCastError", () => {
+dntShim.Deno.test("InvalidCastError", () => {
     const e = assert.throws(
         () => {
             InvalidCastError.throw();
@@ -283,7 +284,7 @@ Deno.test("InvalidCastError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("InvalidOperationError", () => {
+dntShim.Deno.test("InvalidOperationError", () => {
     const e = assert.throws(
         () => {
             InvalidOperationError.throw();
@@ -311,7 +312,7 @@ Deno.test("InvalidOperationError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("NotSupportedError", () => {
+dntShim.Deno.test("NotSupportedError", () => {
     const e = assert.throws(
         () => {
             NotSupportedError.throw();
@@ -339,7 +340,7 @@ Deno.test("NotSupportedError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("NotImplementedError", () => {
+dntShim.Deno.test("NotImplementedError", () => {
     const e = assert.throws(
         () => {
             NotImplementedError.throw();
@@ -367,7 +368,7 @@ Deno.test("NotImplementedError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("FormatError", () => {
+dntShim.Deno.test("FormatError", () => {
     const e = assert.throws(
         () => {
             FormatError.throw();
@@ -395,7 +396,7 @@ Deno.test("FormatError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("ObjectDisposedError", () => {
+dntShim.Deno.test("ObjectDisposedError", () => {
     const e = assert.throws(
         () => {
             ObjectDisposedError.throw();
@@ -423,7 +424,7 @@ Deno.test("ObjectDisposedError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("NullReferenceError", () => {
+dntShim.Deno.test("NullReferenceError", () => {
     const e = assert.throws(
         () => {
             NullReferenceError.throw(null);
@@ -451,7 +452,7 @@ Deno.test("NullReferenceError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("TimeoutError", () => {
+dntShim.Deno.test("TimeoutError", () => {
     const e = assert.throws(
         () => {
             TimeoutError.throw();
@@ -479,7 +480,7 @@ Deno.test("TimeoutError", () => {
     assert.equals(e2.innerError, e);
 });
 
-Deno.test("Error", () => {
+dntShim.Deno.test("Error", () => {
     try {
         throw new Error("test error");
     } catch (e) {
@@ -503,7 +504,7 @@ class Test {
     }
 }
 
-Deno.test("hideFromStackStace decorator hides the method from stackTrace", () => {
+dntShim.Deno.test("hideFromStackStace decorator hides the method from stackTrace", () => {
     const test = new Test();
     try {
         test.testSystemError();

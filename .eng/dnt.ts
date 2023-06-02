@@ -11,11 +11,16 @@ await build({
     // see JS docs for overview and more options
     deno: { 
         test: "dev"
-    }
+    },
   },
-  mappings: {
-    "./_format.ts" : "./_format.npm.ts",
+ 
+  "mappings": {
+     "https://deno.land/x/bearzsh_assertions@0.1.0/mod.ts": {
+        name: "@bearz-sh/assertions",
+        version: "0.1.0",
+     }
   },
+
   package: {
     // package.json properties
     name: `@bearz-sh/${SHORT_NAME}`,

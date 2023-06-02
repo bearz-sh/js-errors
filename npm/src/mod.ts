@@ -41,6 +41,10 @@
  *
  * @module
  */
+import "./_dnt.polyfills.js";
+
+import * as dntShim from "./_dnt.shims.js";
+
 
 export interface IExceptionOptions {
     /**
@@ -182,7 +186,7 @@ export function printError(e: Error, format?: (e: Error) => string, write?: (dat
 
 function getPlatform(): string {
     // deno-lint-ignore no-explicit-any
-    const g = globalThis as any;
+    const g = dntShim.dntGlobalThis as any;
     if (g && g.Deno && g.Deno.build) {
         return g.Deno.build.os;
     }

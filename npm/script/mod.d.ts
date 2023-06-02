@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * Bearz-sh error module
  *
@@ -41,53 +42,44 @@
  *
  * @module
  */
-
+import "./_dnt.polyfills.js";
 export interface IExceptionOptions {
     /**
      * The cause of the error. Similar to `innerError` but not
      * necessarily an error.
      */
-    // deno-lint-ignore no-explicit-any
     cause?: any;
-
     /**
      * Gets or sets the inner error that caused this error, if any.
      */
     innerError?: Error;
-
     /**
      * Gets or sets additional data associated with this error.
      */
     data?: Record<string, unknown>;
-
     /**
      * Gets or sets a link to documentation about this error.
      */
     link?: string | URL;
 }
-
 export interface IException extends IExceptionOptions {
     /**
      * Gets or sets the message for this error.
      */
     message: string;
-
     /**
      * Gets or sets the stack trace for this error.
      */
     stack?: string;
-
     /**
      * Gets the name of this error.
      */
     readonly name: string;
-
     /**
      * Gets the stack trace for this error as an array of strings that
      */
     readonly stackTrace: string[];
 }
-
 /**
  * Gets the stack trace for the given error. If the error does not have a stack trace,
  * it will return an empty array.
@@ -95,25 +87,11 @@ export interface IException extends IExceptionOptions {
  * @param e The error to get the stack trace for.
  * @returns A string array of the stack trace for each frame.
  */
-export function getStackTrace(e: Error): string[] {
-    if (e.stack) {
-        return e.stack.split("\n").map((line) => line.trim()).filter((o) => o.startsWith("at "));
-    }
-
-    return [];
-}
-
+export declare function getStackTrace(e: Error): string[];
 /**
  * Collects all errors from the given error tree and returns them as an array.
  */
-export function collectError(e: Error) {
-    const errors: Error[] = [];
-
-    walkError(e, (error) => errors.push(error));
-
-    return errors;
-}
-
+export declare function collectError(e: Error): Error[];
 /**
  * Walks the error tree and invokes the callback for each error. It will
  * walk the inner error, cause, and aggregate errors if they are an instance
@@ -122,26 +100,7 @@ export function collectError(e: Error) {
  * @param e The error to walk.
  * @param callback The callback to invoke for each error.
  */
-export function walkError(e: Error, callback: (e: Error) => void): void {
-    if (e instanceof AggregateError && e.errors) {
-        for (const error of e.errors) {
-            if (error instanceof Error) {
-                walkError(error, callback);
-            }
-        }
-    }
-
-    if (e instanceof SystemError && e.innerError) {
-        walkError(e.innerError, callback);
-    }
-
-    if (e.cause !== undefined && e.cause !== null && e.cause instanceof Error) {
-        walkError(e.cause, callback);
-    }
-
-    callback(e);
-}
-
+export declare function walkError(e: Error, callback: (e: Error) => void): void;
 /**
  * Prints the error to the console and if an error derives from SystemError,
  * it will print the inner error as well.
@@ -150,114 +109,20 @@ export function walkError(e: Error, callback: (e: Error) => void): void {
  * @param format Formats the error to the console.
  * @param write A function that overrides the default behavor of writing to console.error.
  */
-// deno-lint-ignore no-explicit-any
-export function printError(e: Error, format?: (e: Error) => string, write?: (data?: any) => void): void {
-    write = write || console.error;
-
-    if (e instanceof AggregateError && e.errors) {
-        for (const error of e.errors) {
-            printError(error, format, write);
-        }
-    }
-
-    if (e instanceof SystemError && e.innerError) {
-        printError(e.innerError, format, write);
-    }
-
-    if (e.cause !== undefined && e.cause !== null) {
-        if (e.cause instanceof Error) {
-            printError(e.cause, format, write);
-        } else {
-            write(e.cause);
-        }
-    }
-
-    if (format) {
-        write(format(e));
-        return;
-    }
-
-    write(e);
-}
-
-function getPlatform(): string {
-    // deno-lint-ignore no-explicit-any
-    const g = globalThis as any;
-    if (g && g.Deno && g.Deno.build) {
-        return g.Deno.build.os;
-    }
-
-    if (g && g.process && g.process.platform) {
-        const os = g.process.platform;
-        if (os === "win32") {
-            return "windows";
-        }
-    }
-
-    if (g && g.navigator) {
-        if (g.navigator.userAgentData) {
-            return g.navigator.userAgentData.platform.toLowerCase();
-        }
-
-        if (g.navigator.platform) {
-            const parts = g.navigator.platform.split(" ");
-            if (parts.length > 0) {
-                return parts[0].toLowerCase();
-            }
-        }
-    }
-
-    return "unknown";
-}
-
+export declare function printError(e: Error, format?: (e: Error) => string, write?: (data?: any) => void): void;
 /**
  * A decorator for hiding a function from the stack trace.
  *
  * @experimental This is experimental and may change or be removed in a future release.
  */
-export function hideFromStackTrace() {
-    // deno-lint-ignore no-explicit-any
-    return function (target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-        const original = descriptor.value;
-        if (typeof original === "function") {
-            descriptor.value = (...args: unknown[]) => {
-                try {
-                    return original.apply(target, args);
-                } catch (e) {
-                    if (e instanceof Error && e.stack) {
-                        // first line of stack trace is the message, though could be multiple lines
-                        // if the dev used '\n' in the error message.
-                        // todo: figure out messages can exceed the first line.
-                        const lines = e.stack.split("\n");
-                        const line = lines.filter((o) => o.includes(original.name));
-                        if (!line || line.length === 0) {
-                            throw e;
-                        }
-
-                        const start = lines.indexOf(line[0]);
-                        if (start > -1) {
-                            lines.splice(start, 2);
-                            e.stack = lines.join("\n");
-                        }
-
-                        throw e;
-                    }
-                }
-            };
-        }
-        return descriptor;
-    };
-}
-
+export declare function hideFromStackTrace(): (target: any, _propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
 /**
  * The core error type for system errors such
  * as `ArgumentError`, `FormatError` and `ArgumentNullError`.
  */
-export class SystemError extends Error implements IException {
-    #stackLines?: string[];
-
-    override name = "SystemError";
-
+export declare class SystemError extends Error implements IException {
+    #private;
+    name: string;
     /**
      * Gets or sets the inner error that caused this error, if any.
      */
@@ -266,94 +131,49 @@ export class SystemError extends Error implements IException {
      * Gets or sets additional data associated with this error.
      */
     data?: Record<string, unknown>;
-
     /**
      * Gets or sets a link to documentation about this error.
      */
     link?: string | URL;
-
     /**
      * Creates a new instance of SystemError.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message: string, options?: Partial<IExceptionOptions>) {
-        super(message);
-        this.set(options);
-    }
-
+    constructor(message: string, options?: Partial<IExceptionOptions>);
     /**
      * Sets the properties of this error from the given object.
      *
      * @param props The properties to set.
      * @returns This error.
      */
-    set(props?: Partial<IExceptionOptions>) {
-        if (props === undefined) {
-            return this;
-        }
-
-        for (const [key, value] of Object.entries(props)) {
-            if (key === "name" || key === "stack") {
-                continue;
-            }
-
-            if (Object.hasOwn(this, key)) {
-                // @ts-ignore. between the Partial and Object.hasOwn, this is a valid property
-                this[key] = value;
-            }
-        }
-
-        return this;
-    }
-
+    set(props?: Partial<IExceptionOptions>): this;
     /**
      * Sets the stack for this error.
      */
-    set stack(value: string | undefined) {
-        this.#stackLines = undefined;
-        super.stack = value;
-    }
-
+    set stack(value: string | undefined);
     /**
      * Gets the stack trace for this error as an array of strings that
      * represent each line of the stack.
      *
      * @returns The stack trace for this error.
      */
-    get stackTrace(): string[] {
-        if (!this.#stackLines) {
-            if (this.stack) {
-                this.#stackLines = this.stack.split("\n").map((line) => line.trim()).filter((o) => o.startsWith("at "));
-            } else {
-                this.#stackLines = [];
-            }
-        }
-
-        return this.#stackLines;
-    }
-
+    get stackTrace(): string[];
     /**
      * Sets the stack trace for this error.
      */
-    set stackTrace(value: string[]) {
-        this.#stackLines = value;
-        super.stack = value.join("\n");
-    }
+    set stackTrace(value: string[]);
 }
-
-const win32Docs = "https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Debug/system-error-codes.md";
-
 /**
  * An error that represents an Win32 error that contains a system error code. This is for
  * Foreign Function Interface (FFI) calls that return a Win32 error code.
- * 
+ *
  * The default message is "Win32 error ${code}. See ${code} for more information using ${win32Docs}."
  */
-export class Win32Error extends SystemError {
-    override name = "Win32Error";
-
+export declare class Win32Error extends SystemError {
+    code: number;
+    name: string;
     /**
      * Initializes a new instance of the Win32Error class.
      *
@@ -361,29 +181,20 @@ export class Win32Error extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(public code: number, message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || `Win32 error ${code}. See ${code} for more information using ${win32Docs}.`, options);
-        this.link = win32Docs;
-    }
-
-    static throw(code: number, message?: string, options?: Partial<IExceptionOptions>): never {
-        throw new Win32Error(code, message, options);
-    }
+    constructor(code: number, message?: string, options?: Partial<IExceptionOptions>);
+    static throw(code: number, message?: string, options?: Partial<IExceptionOptions>): never;
 }
-
 /**
  * An error for arguments that are invalid.
  *
  * The default message is "Argument ${parameterName} is invalid."
  */
-export class ArgumentError extends SystemError {
+export declare class ArgumentError extends SystemError {
     /**
      * Gets or sets the name of the parameter that is invalid.
      */
     parameterName?: string | null;
-
-    override name = "ArgumentError";
-
+    name: string;
     /**
      * Initializes a new instance of the ArgumentError class.
      *
@@ -391,11 +202,7 @@ export class ArgumentError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || `Argument ${parameterName} is invalid.`, options);
-        this.parameterName = parameterName;
-    }
-
+    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws an ArgumentError if the expression is true.
      * @param expression The expression to evaluate to throw when true.
@@ -405,26 +212,15 @@ export class ArgumentError extends SystemError {
      *
      * @throws {ArgumentError} Thrown when the expression is false.
      */
-    static throwIf(
-        expression: unknown,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts expression {
-        if (expression) {
-            throw new ArgumentError(parameterName, message, options);
-        }
-    }
+    static throwIf(expression: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts expression;
 }
-
 /**
  * An error for when an argument is null, undefined, or empty.
  *
  * The default message is "Argument ${parameterName} must not be null, undefined, or empty."
  */
-export class ArgumentEmptyError extends ArgumentError {
-    override name = "ArgumentEmptyError";
-
+export declare class ArgumentEmptyError extends ArgumentError {
+    name: string;
     /**
      * Initializes a new instance of the ArgumentEmptyError class.
      *
@@ -446,14 +242,7 @@ export class ArgumentEmptyError extends ArgumentError {
      * doSomething([]); // throws ArgumentEmptyError
      * ```
      */
-    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>) {
-        super(
-            parameterName,
-            message || `Argument ${parameterName} must not be null, undefined, or empty.`,
-            options,
-        );
-    }
-
+    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws an ArgumentEmptyError if the value is null, undefined, or empty.
      *
@@ -462,21 +251,7 @@ export class ArgumentEmptyError extends ArgumentError {
      * @param message Ths message for the error.
      * @param options The property values to set on the error.
      */
-    static throw<T>(
-        value: null | undefined | ArrayLike<T>,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts value is ArrayLike<T> {
-        if (value === null || value === undefined) {
-            throw new ArgumentEmptyError(parameterName, message, options);
-        }
-
-        if (value.length === 0) {
-            throw new ArgumentEmptyError(parameterName, message, options);
-        }
-    }
-
+    static throw<T>(value: null | undefined | ArrayLike<T>, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts value is ArrayLike<T>;
     /**
      * Throws an ArgumentEmptyError if the expression is true.
      *
@@ -485,27 +260,15 @@ export class ArgumentEmptyError extends ArgumentError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-
-    static throwIf(
-        expression: unknown,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts expression {
-        if (expression) {
-            throw new ArgumentEmptyError(parameterName, message, options);
-        }
-    }
+    static throwIf(expression: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts expression;
 }
-
 /**
  * An error that for arguments that are null or undefined.
  *
  * The default message is "Argument ${parameterName} must not be null or undefined."
  */
-export class ArgumentNullError extends ArgumentError {
-    override name = "ArgumentNullError";
-
+export declare class ArgumentNullError extends ArgumentError {
+    name: string;
     /**
      * Initializes a new instance of the ArgumentNullError class.
      *
@@ -513,14 +276,7 @@ export class ArgumentNullError extends ArgumentError {
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>) {
-        super(
-            parameterName,
-            message || `Argument ${parameterName} must not be null or undefined.`,
-            options,
-        );
-    }
-
+    constructor(parameterName?: string, message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws an ArgumentNullError if the value is null or undefined.
      *
@@ -529,17 +285,7 @@ export class ArgumentNullError extends ArgumentError {
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    static throw(
-        value: unknown,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts value is NonNullable<typeof value> {
-        if (value === null || value === undefined) {
-            throw new ArgumentNullError(parameterName, message, options);
-        }
-    }
-
+    static throw(value: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts value is NonNullable<typeof value>;
     /**
      * Throws an ArgumentNullError if the expression is true.
      *
@@ -548,28 +294,16 @@ export class ArgumentNullError extends ArgumentError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(
-        expression: unknown,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts expression {
-        if (expression) {
-            throw new ArgumentNullError(parameterName, message, options);
-        }
-    }
+    static throwIf(expression: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts expression;
 }
-
 /**
  * An error for when arguments are out of range such as length or indexes.
  *
  * The default message is "Argument ${parameterName} is out of range."
  */
-export class ArgumentRangeError extends ArgumentError {
+export declare class ArgumentRangeError extends ArgumentError {
     value?: unknown;
-
-    override name = "ArgumentRangeError";
-
+    name: string;
     /**
      * Initializes a new instance of the ArgumentRangeError class.
      *
@@ -578,11 +312,7 @@ export class ArgumentRangeError extends ArgumentError {
      * @param message This message for the error.
      * @param innerError This inner error.
      */
-    constructor(value: unknown, parameterName?: string, message?: string, options?: Partial<IExceptionOptions>) {
-        super(parameterName, message || `Argument ${parameterName} is out of range.`, options);
-        this.value = value;
-    }
-
+    constructor(value: unknown, parameterName?: string, message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws an ArgumentRangeError error.
      *
@@ -591,10 +321,7 @@ export class ArgumentRangeError extends ArgumentError {
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    static throw(value: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>) {
-        throw new ArgumentRangeError(value, parameterName, message, options);
-    }
-
+    static throw(value: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws an ArgumentRangeError if the expression is true.
      *
@@ -603,40 +330,23 @@ export class ArgumentRangeError extends ArgumentError {
      * @param message This message for the error.
      * @param innerError This inner error.
      */
-    static override throwIf(
-        expression: unknown,
-        parameterName: string,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts expression {
-        if (expression) {
-            throw new ArgumentRangeError(undefined, parameterName, message, options);
-        }
-    }
+    static throwIf(expression: unknown, parameterName: string, message?: string, options?: Partial<IExceptionOptions>): asserts expression;
 }
-
 /**
  * An error for failed assertions.
  *
  * The default message is "Assertion failed."
  */
-export class AssertionError extends SystemError {
-    override name = "AssertionError";
-
+export declare class AssertionError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the AssertionError class.
      *
      * @param message This message for the error.
      * @param innerError This inner error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Assertion failed.", options);
-    }
-
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new AssertionError(message, options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws an AssertionError error.
      *
@@ -644,41 +354,29 @@ export class AssertionError extends SystemError {
      * @param message This message for the error.
      * @param innerError This inner error.
      */
-    static throwIf(expression: unknown, message?: string, options?: Partial<IExceptionOptions>): asserts expression {
-        if (expression) {
-            throw new AssertionError(message, options);
-        }
-    }
+    static throwIf(expression: unknown, message?: string, options?: Partial<IExceptionOptions>): asserts expression;
 }
-
 /**
  * An error for when an operation times out.
  *
  * The default message is "Operation timed out."
  */
-export class TimeoutError extends SystemError {
-    override name = "TimeoutError";
-
+export declare class TimeoutError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the TimeoutError class.
      *
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Operation timed out.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * throw a TimeoutError error.
      *
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new TimeoutError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws a TimeoutError if the condition is true.
      *
@@ -686,106 +384,70 @@ export class TimeoutError extends SystemError {
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new TimeoutError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
- * An error for when a function, method, property, or subroutine 
+ * An error for when a function, method, property, or subroutine
  * general action, enum, or case is not supported.
  *
  * The default message is "Operation is not supported."
  */
-export class NotSupportedError extends SystemError {
-    override name = "NotSupportedError";
-
+export declare class NotSupportedError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the NotSupportedError class.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Operation is not supported.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws a NotSupportedError error.
      *
      * @param message The message for the error.
      * @param innerError This inner error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new NotSupportedError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * @param condition The condition to evaluate to throw when true.
      * @param message
      * @param innerError
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new NotSupportedError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
  * An error for when an object has disposed of resources and can
  * no longer be used.
  *
  * The default message is "Object is disposed."
  */
-export class ObjectDisposedError extends SystemError {
-    override name = "ObjectDisposedError";
-
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Object is disposed.", options);
-    }
-
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new ObjectDisposedError(message, options);
-    }
-
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new ObjectDisposedError(message, options);
-        }
-    }
+export declare class ObjectDisposedError extends SystemError {
+    name: string;
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
  * An error for when a function, method, property, case,
  * or a subroutine is not implemented.
  *
  * The default message is "Not implemented."
  */
-export class NotImplementedError extends SystemError {
-    override name = "NotImplementedError";
-
+export declare class NotImplementedError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the NotImplementedError class.
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Not implemented.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws a NotImplementedError error.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new NotImplementedError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws a NotImplementedError if the condition is true.
      *
@@ -793,48 +455,33 @@ export class NotImplementedError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new NotImplementedError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
  * An error for when a platform such as an operating system is not supported.
  *
  * The default message is "Platform is not supported."
  */
-export class PlatformNotSupportedError extends SystemError {
-    override name = "PlatformNotSupportedError";
-
+export declare class PlatformNotSupportedError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the PlatformNotSupportedError class.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Platform is not supported.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Gets the current platform.
      */
-    static get platform(): string {
-        return getPlatform();
-    }
-
+    static get platform(): string;
     /**
      * Throws a PlatformNotSupportedError error.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new PlatformNotSupportedError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws if the condition is true.
      *
@@ -842,12 +489,7 @@ export class PlatformNotSupportedError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new PlatformNotSupportedError(message, options);
-        }
-    }
-
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws when a platform doesn't match the current os provided by the runtime.
      *
@@ -855,53 +497,36 @@ export class PlatformNotSupportedError extends SystemError {
      * @param message The message to
      * @param options The property values to set on the error.
      */
-    static throwWhenOsNotSupported(os: string, message?: string, options?: Partial<IExceptionOptions>) {
-        if (getPlatform() === os) {
-            throw new PlatformNotSupportedError(message || `The ${os} platform is not supported.`, options);
-        }
-    }
-
+    static throwWhenOsNotSupported(os: string, message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws when a platform doesn't match the current os provided by the runtime.
      * @param os The operating system to check.
      * @param message The message to throw.
      * @param options The property values to set on the error.
      */
-    static throwWhenOsSupported(os: string, message?: string, options?: Partial<IExceptionOptions>) {
-        if (getPlatform() !== os) {
-            throw new PlatformNotSupportedError(message || `Only the ${os} platform is supported.`, options);
-        }
-    }
+    static throwWhenOsSupported(os: string, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
  * An error that is thrown when a function, method, property
  * or a subroutine has an invalid operation.
  *
  * The default message is "Invalid operation."
  */
-export class InvalidOperationError extends SystemError {
-    override name = "InvalidOperationError";
-
+export declare class InvalidOperationError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the InvalidOperationError class.
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Invalid operation.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws a InvalidOperationError error.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new InvalidOperationError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws a InvalidOperationError if the condition is true.
      *
@@ -909,42 +534,30 @@ export class InvalidOperationError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new InvalidOperationError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
-
 /**
  * An error for when casting a value from one type to another type
  * is invalid.
  *
  * The default message is "Invalid cast."
  */
-export class InvalidCastError extends SystemError {
-    override name = "InvalidCastError";
-
+export declare class InvalidCastError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the InvalidCastError class.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Invalid cast.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws a InvalidCastError error.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new InvalidCastError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throw a InvalidCastError if the condition is true.
      *
@@ -952,30 +565,22 @@ export class InvalidCastError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>) {
-        if (condition) {
-            throw new InvalidCastError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IExceptionOptions>): void;
 }
 /**
  * An error for when a value is null or undefined.
  *
  * The default message is "Null or undefined reference."
  */
-export class NullReferenceError extends SystemError {
-    override name = "NullReferenceError";
-
+export declare class NullReferenceError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the NullReferenceError class.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Null or undefined reference.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throws a NullReferenceError error.
      *
@@ -983,45 +588,29 @@ export class NullReferenceError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(
-        value: unknown,
-        message?: string,
-        options?: Partial<IExceptionOptions>,
-    ): asserts value is NonNullable<typeof value> {
-        if (value === null || value === undefined) {
-            throw new NullReferenceError(message, options);
-        }
-    }
+    static throw(value: unknown, message?: string, options?: Partial<IExceptionOptions>): asserts value is NonNullable<typeof value>;
 }
-
 /**
  * An error for when there is an issue formatting a value.
  *
  * The default message is "Format error."
  */
-export class FormatError extends SystemError {
-    override name = "FormatError";
-
+export declare class FormatError extends SystemError {
+    name: string;
     /**
      * Initializes a new instance of the FormatError class.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    constructor(message?: string, options?: Partial<IExceptionOptions>) {
-        super(message || "Format error.", options);
-    }
-
+    constructor(message?: string, options?: Partial<IExceptionOptions>);
     /**
      * Throw a FormatError error.
      *
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throw(message?: string, options?: Partial<IExceptionOptions>) {
-        throw new FormatError(message, options);
-    }
-
+    static throw(message?: string, options?: Partial<IExceptionOptions>): void;
     /**
      * Throws a FormatError if the condition is true.
      *
@@ -1029,9 +618,5 @@ export class FormatError extends SystemError {
      * @param message The message for the error.
      * @param options The property values to set on the error.
      */
-    static throwIf(condition: boolean, message?: string, options?: Partial<IException>) {
-        if (condition) {
-            throw new FormatError(message, options);
-        }
-    }
+    static throwIf(condition: boolean, message?: string, options?: Partial<IException>): void;
 }
