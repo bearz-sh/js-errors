@@ -14,13 +14,15 @@ The `SystemError` class provides the common properties:
 - `link` - A link to documentation about this error.
 - `stackTrace` - The stack trace for this as an array of strings, one for each frame.
 
-The `ArgumentError` class is a specialization of `SystemError` that is used to indicate that an argument to a function
-is invalid and provides a base class for more specific argument errors.
+The `ArgumentError` class is a specialization of `SystemError` that is used to indicate
+that an argument to a function is invalid and provides a base class for more specific
+argument errors.
 
-There are static throw methods on `SystemError` and `ArgumentError` that can be used to throw an error.
+There are static throw methods on `SystemError` and `ArgumentError` that can be used to
+throw an error.
 
-There is an experimental `@hideFromStackTrace` decorator method which will hide a method on the class from the
-stackTrace property.
+There is an experimental `@hideFromStackTrace` decorator method which will hide a method
+on the class from the stackTrace property.
 
 ## Deno
 
